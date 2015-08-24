@@ -3,6 +3,7 @@
 # En revisión general no se compara con la base de datos "final"
 
 library(rmarkdown)
+library(DT)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
@@ -14,7 +15,6 @@ shinyServer(function(input, output) {
     # leemos las rutas ingresadas en la applicación
     ruta_entrega <- input$path_reporte
     ruta_base <- input$path_sqlite
-    
     # si no se ingresó una ruta lo guarda en el escritorio
     if(dirname(ruta_entrega) == "."){
       ruta_entrega <- paste("../reportes/", ruta_entrega, sep = "")
@@ -33,6 +33,9 @@ shinyServer(function(input, output) {
       render('../scripts/revision_gral_iso.Rmd', output_file = output_reporte, 
         output_dir = ruta_entrega)
       
+      # tabla a desplegar en a app
+      resp <- list(tab_cgl)
+      
       # revisamos su hay repetidos, y si hace falta creamos reporte y txt
       conglomerado_reps <- collect(tbl(base_input, "Conglomerado_muestra"))
       cgl_reps <- conglomerado_reps %>%
@@ -44,16 +47,21 @@ shinyServer(function(input, output) {
         render('../scripts/revision_repetidos_iso.Rmd', output_file = output_rep, 
           output_dir = ruta_entrega)
       }
-	  
 	  imprimir <- paste("Se crearon los reportes en el directorio:", ruta_entrega)
     }else{
-      imprimir <- "No se encontró niguna base de datos con terminación sqlite."
+      imprimir <- "No se encontró niguna base de datos con terminación sqlite, 
+        considera que las rutas a archivos deben usar diagonales derechas (/)."
     }
-	imprimir
+
+  resp[[2]] <- imprimir
+	resp
     
   })
   output$prueba <- renderText({
-    crear_reportes()
+    crear_reportes()[["imprimir"]]
   })
+  output$tbl <- DT::renderDataTable(
+    crear_reportes()[["tab_cgl"]]
+  )
   
 })
