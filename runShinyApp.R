@@ -1,8 +1,10 @@
+require(htmlwidgets)
 library(shiny)
-# this message is printed on several lines (one per path) to make multiple paths
-# easier to spot
+
+# ponemos pandoc en el path para que lo encuentre knitr 
 Sys.setenv(PATH="../miktex/miktex/bin/;../pandoc")
 
+# esta línea sirve para asegurarnos de que se este utilizando R-portable
 message('library paths:\n', paste('... ', .libPaths(), sep='', collapse='\n'))
 
 shiny::runApp('./shiny/', port = 6452)
