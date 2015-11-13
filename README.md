@@ -37,7 +37,7 @@ Explicamos la función de cada archivo:
 * server.R (shiny): recibe la información de *ui.R* y llama a los scripts *revision_gral_iso.Rmd* y *revision_repetidos_iso.Rmd*.
 * revision_gral_iso.Rmd: crea el reporte de Word con información encontrada en la base de datos. El sufijo iso en el nombre indica que se guardaron con encoding iso, esto es necesario para que los acentos y caracteres especiales están bien en Windows.
 * revision_repetidos_iso.Rmd: en caso de existir conglomerados repetidos en la base de datos, compara la información con el fin de que se determine cuál es la versión más completa.
-* migracion_archivos.R crea la estructura de archivos, basándose en la información capturada en la base de datos.
+* migracion_archivos.R: crea la estructura de archivos, basándose en la información capturada en la base de datos.
 * malla.RData: almacena las coordenadas teóricas de los conglomerados, el script revision_gral_iso.Rmd lo utiliza para determinar la distancia entre la malla teñórica y las coordenadas ingresadas al cliente.
 * pandoc: Rmarkdown lo necesita para poder crear los reportes, esta carpeta esta incluída en RStudio, es necesario copiarla
 de una descarga de [RStudio](https://www.rstudio.com/products/RStudio/) (de Windows), y se encuentra en `RStudio/bin/pandoc`.
