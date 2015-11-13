@@ -7,4 +7,4 @@ Sys.setenv(PATH="../miktex/miktex/bin/;../pandoc")
 # esta línea sirve para asegurarnos de que se este utilizando R-portable
 message('library paths:\n', paste('... ', .libPaths(), sep='', collapse='\n'))
 
-shiny::runApp('./shiny/', port = 6452)
+shiny::runApp('./shiny/', launch.browser = TRUE)

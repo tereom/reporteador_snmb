@@ -15,10 +15,12 @@ shinyServer(function(input, output, session) {
     
     # función que crea los reportes cuando se presiona "generar_reportes"
     crear_reportes <- eventReactive(input$actualiza, {
-        # leemos las rutas ingresadas en la applicación
+      
+        # leemos las rutas ingresadas en la aplicación
         ruta_entrega <- input$path_reporte
         ruta_base <- input$path_sqlite
-        # si no se ingresó una ruta lo guarda en el escritorio
+        
+        # si no se ingresó una ruta lo guarda en la carpeta "reportes"
         if(dirname(ruta_entrega) == "."){
             ruta_entrega <- paste("../reportes/", ruta_entrega, sep = "")
         }
@@ -50,6 +52,19 @@ shinyServer(function(input, output, session) {
                 render('../scripts/revision_repetidos_iso.Rmd', output_file = output_rep,
                 output_dir = ruta_entrega)
             }
+            
+            # estructura de archivos:
+            # ruta a carpeta de archivos:
+            ruta_archivos <- paste0(dirname(ruta_entrega), "/", entrega)
+            
+            # ruta a base de datos:
+            base_archivos <- base_sqlite[1]
+
+            # ruta a carpeta con archivos antes de procesarlos:
+            dir_j <- ruta_base
+            
+            source('../scripts/migracion_archivos.R', local = TRUE)
+            
             imprimir <- paste("Los reportes se crearon en el directorio:", ruta_entrega)
         }else{
             imprimir <- "No se encontró niguna base de datos con terminación sqlite,

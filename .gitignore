@@ -3,3 +3,4 @@ pandoc
 R-Portable
 reportes
 *.log
+*.Rhistory
