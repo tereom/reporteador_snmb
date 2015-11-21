@@ -18,7 +18,6 @@
 # |   ├───fotos_videos
 # |   ├───audio
 # |   ├───archivos_pdf
-
 library("plyr")
 library("dplyr")
 library("tidyr")
@@ -941,16 +940,16 @@ Rutas_origen_destino_success <- Rutas_origen_destino %>%
     archivo_ruta = ruta_origen
   )
   
-Rutas_origen_destino_fail <- Rutas_origen_destino %>%
-  filter(!resultados) %>%
-  separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
-  select(
-    conglomerado,
-    anio,
-    mes,
+#Rutas_origen_destino_fail <- Rutas_origen_destino %>%
+  #filter(!resultados) %>%
+  #separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
+  #select(
+    #conglomerado,
+    #anio,
+    #mes,
     #institucion,
-    archivo_ruta = ruta_origen
-  )
+    #archivo_ruta = ruta_origen
+  #)
 
 # Archivos faaail, una razón puede ser que guardaron el mismo archivo en dos
 # lugares distintos usando el cliente viejo, entonces al hacer join de los
@@ -1105,29 +1104,29 @@ lapply(ruta_archivos_no_registrados_subcarpetas, dir.create)
 
 # Recordar Archivo_origen es un df con ruta = lista_archivos_j y nombre =
 # nombres_archivos_j
-Archivos_no_registrados_origen_destino <- Archivo_origen %>%
-  filter(
-    !(ruta %in% Rutas_origen_destino$ruta_origen),
-    grepl("(jpg|mov|wav|avi|pdf)$", lista_archivos_j, ignore.case = TRUE)
-  ) %>%
-  mutate(
-    nuevo_nombre = gsub("(.*\\.).*\\.(.*\\.).*\\.", "\\1\\2", nombre)
-  ) %>%
-  mutate(
-    ruta_destino = ifelse(grepl("jpg|mov|avi", nuevo_nombre, ignore.case = TRUE),
-      paste(ruta_archivos_no_registrados, "fotos_videos", nuevo_nombre, sep = "/"),
-      ifelse(grepl("wav", nuevo_nombre, ignore.case = TRUE),
-        paste(ruta_archivos_no_registrados, "audio", nuevo_nombre, sep = "/"),
-        paste(ruta_archivos_no_registrados, "archivos_pdf", sep = "/")
-      )
-    )
-  ) %>%
-  select(
-    ruta_origen = ruta,
-    ruta_destino
-  )
-
-# Copiando los archivos (no creo necesario hacer chequeos con resultados_nr,
-# puesto que son archivos no registrados en la base de datos.)
-resultados_nr <- apply(Archivos_no_registrados_origen_destino, 1,
-  function(x) file.copy(x['ruta_origen'], x['ruta_destino'], overwrite = FALSE))
+# Archivos_no_registrados_origen_destino <- Archivo_origen %>%
+#   filter(
+#     !(ruta %in% Rutas_origen_destino$ruta_origen),
+#     grepl("(jpg|mov|wav|avi|pdf)$", lista_archivos_j, ignore.case = TRUE)
+#   ) %>%
+#   mutate(
+#     nuevo_nombre = gsub("(.*\\.).*\\.(.*\\.).*\\.", "\\1\\2", nombre)
+#   ) %>%
+#   mutate(
+#     ruta_destino = ifelse(grepl("jpg|mov|avi", nuevo_nombre, ignore.case = TRUE),
+#       paste(ruta_archivos_no_registrados, "fotos_videos", nuevo_nombre, sep = "/"),
+#       ifelse(grepl("wav", nuevo_nombre, ignore.case = TRUE),
+#         paste(ruta_archivos_no_registrados, "audio", nuevo_nombre, sep = "/"),
+#         paste(ruta_archivos_no_registrados, "archivos_pdf", sep = "/")
+#       )
+#     )
+#   ) %>%
+#   select(
+#     ruta_origen = ruta,
+#     ruta_destino
+#   )
+# 
+# # Copiando los archivos (no creo necesario hacer chequeos con resultados_nr,
+# # puesto que son archivos no registrados en la base de datos.)
+# resultados_nr <- apply(Archivos_no_registrados_origen_destino, 1,
+#   function(x) file.copy(x['ruta_origen'], x['ruta_destino'], overwrite = FALSE))
