@@ -18,6 +18,7 @@
 # |   ├───fotos_videos
 # |   ├───audio
 # |   ├───archivos_pdf
+
 library("plyr")
 library("dplyr")
 library("tidyr")
@@ -73,6 +74,12 @@ Archivo_incendio <- collect(tbl(base_input, "Archivo_incendio"))
 # corresponden a ningún archivo, sólo se extrae lo mínimo necesario para ligar
 # a los archivos con conglomerado (a excepción de "Sitio_muestra", cuyo campo
 # "sitio_numero" se utilizará para renombrar algunos archivos)
+
+# Supuestos:
+# 1. La base de datos contiene al menos un conglomerado.
+# 2. La información y fotografías de sitio se entregaron correctamente en dicha base
+# (ésto porque se procesan las imágenes de sitio de manera ligeramente distinta
+# a las demás)
 
 ###
 Conglomerado_muestra_sub <- Conglomerado_muestra %>%
@@ -911,50 +918,74 @@ Rutas_origen_destino <- Archivo_ruta %>%
 # En esta tabla se incluye archivo_nombre_original, porque las causas por las que
 # no se encuentran los archivos son ajenas a CONABIO.
 Archivos_no_encontrados <- anti_join(Archivo_ruta, Archivo_origen,
-  by = c("entrada" = "nombre")) %>%
-  separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
-  select(
-    #institucion,
-    conglomerado,
-    anio,
-    mes,
-    nombre_nuevo = entrada,
-    nombre_original = archivo_nombre_original
-  ) %>%
-  arrange(conglomerado)
+  by = c("entrada" = "nombre"))
 
-# Copiando los archivos:
-resultados <- apply(Rutas_origen_destino, 1, function(x) file.copy(x['ruta_origen'],
-  x['ruta_destino'], overwrite = FALSE))
+if(nrow(Archivos_no_encontrados) > 0){
+  Archivos_no_encontrados <- Archivos_no_encontrados %>%
+    separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
+    select(
+      #institucion,
+      conglomerado,
+      anio,
+      mes,
+      nombre_nuevo = entrada,
+      nombre_original = archivo_nombre_original
+    ) %>%
+    arrange(conglomerado)
+} else {
+  Archivos_no_encontrados <- data.frame()
+}
 
-# ¿Qué archivos no se lograron copiar y cuáles sí?
-table(resultados)
-Rutas_origen_destino_success <- Rutas_origen_destino %>%
-  filter(resultados) %>%
-  separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
-  select(
-    conglomerado,
-    anio,
-    mes,
-    #institucion,
-    archivo_ruta = ruta_origen
-  )
+if(nrow(Rutas_origen_destino) > 0){
   
-#Rutas_origen_destino_fail <- Rutas_origen_destino %>%
-  #filter(!resultados) %>%
-  #separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
-  #select(
-    #conglomerado,
-    #anio,
-    #mes,
-    #institucion,
-    #archivo_ruta = ruta_origen
-  #)
+  # Copiando los archivos:
+  resultados <- apply(Rutas_origen_destino, 1, function(x) file.copy(x['ruta_origen'],
+    x['ruta_destino'], overwrite = FALSE))
 
-# Archivos faaail, una razón puede ser que guardaron el mismo archivo en dos
-# lugares distintos usando el cliente viejo, entonces al hacer join de los
-# archivos en j con los registrados en la base usando el nombre como llave,
-# se duplican los registros y no los puede guardar 2 veces.
+  # ¿Qué archivos no se lograron copiar y cuáles sí?
+  table(resultados)
+  
+  if(sum(resultados) > 0){
+    Rutas_origen_destino_success <- Rutas_origen_destino %>%
+      filter(resultados) %>%
+      separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
+      select(
+        conglomerado,
+        anio,
+        mes,
+        #institucion,
+        archivo_ruta = ruta_origen
+        )
+  } else {
+   Rutas_origen_destino_success <- data.frame()
+  }
+  
+  if(sum(!resultados) > 0){
+    
+    # Archivos faaail, una razón puede ser que guardaron el mismo archivo en dos
+    # lugares distintos usando el cliente viejo, entonces al hacer join de los
+    # archivos en j con los registrados en la base usando el nombre como llave,
+    # se duplican los registros y no los puede guardar 2 veces.
+
+    Rutas_origen_destino_fail <- Rutas_origen_destino %>%
+      filter(!resultados) %>%
+      separate(nombre_anio_mes, c("conglomerado", "anio", "mes")) %>%
+      select(
+        conglomerado,
+        anio,
+        mes,
+        institucion,
+        archivo_ruta = ruta_origen
+        )
+  } else {
+  Rutas_origen_destino_fail <- data.frame()
+  }
+  
+} else {
+  resultados <- c()
+  Rutas_origen_destino_success <- data.frame()
+  Rutas_origen_destino_fail <- data.frame()
+}
 
 ################################################################################
 
@@ -1067,9 +1098,9 @@ if(nrow(Archivos_no_encontrados) > 0)
 # alguna otra razón, por ejemplo, artefactos del join (ver arriba para mayor
 # información).
 
-#if(nrow(Rutas_origen_destino_fail) > 0)
-  #write.csv(Rutas_origen_destino_fail, file = paste0(
-    #dir_padre, "/", entrega, "_fallidos_otros.csv"), row.names = FALSE)
+if(nrow(Rutas_origen_destino_fail) > 0)
+  write.csv(Rutas_origen_destino_fail, file = paste0(
+    dir_padre, "/", entrega, "_fallidos_otros.csv"), row.names = FALSE)
 
 # Reporte de número de formatos por conglomerado
 #write.csv(Conglomerados_formulario, file = paste0(
@@ -1104,29 +1135,30 @@ lapply(ruta_archivos_no_registrados_subcarpetas, dir.create)
 
 # Recordar Archivo_origen es un df con ruta = lista_archivos_j y nombre =
 # nombres_archivos_j
-# Archivos_no_registrados_origen_destino <- Archivo_origen %>%
-#   filter(
-#     !(ruta %in% Rutas_origen_destino$ruta_origen),
-#     grepl("(jpg|mov|wav|avi|pdf)$", lista_archivos_j, ignore.case = TRUE)
-#   ) %>%
-#   mutate(
-#     nuevo_nombre = gsub("(.*\\.).*\\.(.*\\.).*\\.", "\\1\\2", nombre)
-#   ) %>%
-#   mutate(
-#     ruta_destino = ifelse(grepl("jpg|mov|avi", nuevo_nombre, ignore.case = TRUE),
-#       paste(ruta_archivos_no_registrados, "fotos_videos", nuevo_nombre, sep = "/"),
-#       ifelse(grepl("wav", nuevo_nombre, ignore.case = TRUE),
-#         paste(ruta_archivos_no_registrados, "audio", nuevo_nombre, sep = "/"),
-#         paste(ruta_archivos_no_registrados, "archivos_pdf", sep = "/")
-#       )
-#     )
-#   ) %>%
-#   select(
-#     ruta_origen = ruta,
-#     ruta_destino
-#   )
-# 
-# # Copiando los archivos (no creo necesario hacer chequeos con resultados_nr,
-# # puesto que son archivos no registrados en la base de datos.)
-# resultados_nr <- apply(Archivos_no_registrados_origen_destino, 1,
-#   function(x) file.copy(x['ruta_origen'], x['ruta_destino'], overwrite = FALSE))
+Archivos_no_registrados_origen_destino <- Archivo_origen %>%
+  filter(
+    !(ruta %in% Rutas_origen_destino$ruta_origen),
+    grepl("(jpg|mov|wav|avi|pdf)$", lista_archivos_j, ignore.case = TRUE)
+  ) %>%
+  mutate(
+    nuevo_nombre = gsub("(.*\\.).*\\.(.*\\.).*\\.", "\\1\\2", nombre)
+  ) %>%
+  mutate(
+    ruta_destino = ifelse(grepl("jpg|mov|avi", nuevo_nombre, ignore.case = TRUE),
+      paste(ruta_archivos_no_registrados, "fotos_videos", nuevo_nombre, sep = "/"),
+      ifelse(grepl("wav", nuevo_nombre, ignore.case = TRUE),
+        paste(ruta_archivos_no_registrados, "audio", nuevo_nombre, sep = "/"),
+        paste(ruta_archivos_no_registrados, "archivos_pdf", sep = "/")
+      )
+    )
+  ) %>%
+  select(
+    ruta_origen = ruta,
+    ruta_destino
+  )
+
+# Copiando los archivos (no creo necesario hacer chequeos con resultados_nr,
+# puesto que son archivos no registrados en la base de datos.)
+if(nrow(Archivos_no_registrados_origen_destino) > 0)
+  resultados_nr <- apply(Archivos_no_registrados_origen_destino, 1,
+    function(x) file.copy(x['ruta_origen'], x['ruta_destino'], overwrite = FALSE))
