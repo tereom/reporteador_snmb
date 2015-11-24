@@ -5,7 +5,7 @@ con el cliente de captura del [SNMB](https://github.com/tereom/cliente_web2py), 
 
 Los reportes consisten en dos archivos word: el primero contiene tablas que indican las secciones del cliente en que se capturó información y da medidas del volumen de información almacenada, número de archivos, número de grabaciones, número de fotos, etc. El segundo archivo se genera únicamente cuando se detectan conglomerados repetidos en la base de datos, indica si la información en los repetidos es la misma. Los reportes son similares a los producidos por el reporteador ubicado en el repositorio [Integración SNMB](https://github.com/tereom/integracion_snmb). Adicionalmente, se crea una copia de la base de datos sqlite, esto en caso de que se desee explorar directamente la base de datos.
 
-La estructura de archivos es similar a la del migrador (repositorio [Integración SNMB](https://github.com/tereom/integracion_snmb)). Y, al igual que este último, genera el reporte correspondiente en cualquiera de los casos suguientes:
+La estructura de archivos es similar a la del migrador (repositorio [Integración SNMB](https://github.com/tereom/integracion_snmb)). Y, al igual que este último, genera el reporte correspondiente en cualquiera de los casos siguientes:
 * Cuando existen archivos registrados en la base de datos pero que no se encontraron (y por lo tanto, no se pudieron migrar).
 * Cuando existen archivos registrados en la base de datos, que también se encontraron, pero no se pudieron migrar por alguna razón.
 
